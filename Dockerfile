@@ -1,5 +1,5 @@
-# Use Heroku's official Ruby buildpack image as a parent image
-FROM heroku/heroku:18-build
+# Use Ubuntu as a parent image
+FROM ubuntu:20.04
 
 # Set environment variables
 ENV LANG C.UTF-8
@@ -9,44 +9,21 @@ ENV RUBY_DOWNLOAD_SHA256 3043099089608859fc8cce7f9fdccaa1f53a462457e3838ec3b25a7
 ENV RUBYGEMS_VERSION 3.2.22
 ENV BUNDLER_VERSION 2.2.22
 
+# Install dependencies
+RUN apt-get update && apt-get install -y curl gnupg build-essential libssl-dev libreadline-dev zlib1g-dev
+
 # Install Ruby
-RUN set -ex \
-    && buildDeps=' \
-        bison \
-        dpkg-dev \
-        libgdbm-dev \
-        ruby \
-    ' \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends $buildDeps \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -fSL -o ruby.tar.gz "https://cache.ruby-lang.org/pub/ruby/$RUBY_MAJOR/ruby-$RUBY_VERSION.tar.gz" \
-    && echo "$RUBY_DOWNLOAD_SHA256 ruby.tar.gz" | sha256sum -c - \
-    && mkdir -p /usr/src/ruby \
-    && tar -xzf ruby.tar.gz -C /usr/src/ruby --strip-components=1 \
-    && rm ruby.tar.gz \
-    && cd /usr/src/ruby \
-    && { echo '#define ENABLE_PATH_CHECK 0'; echo; cat file.c; } > file.c.new && mv file.c.new file.c \
-    && autoconf \
-    && gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
-    && ./configure --build="$gnuArch" --disable-install-doc --enable-shared \
-    && make -j "$(nproc)" \
+RUN curl -sSL https://cache.ruby-lang.org/pub/ruby/$RUBY_MAJOR/ruby-$RUBY_VERSION.tar.gz | tar -xz \
+    && cd ruby-$RUBY_VERSION \
+    && ./configure --disable-install-doc \
+    && make \
     && make install \
-    && apt-get purge -y --auto-remove $buildDeps \
     && gem update --system "$RUBYGEMS_VERSION" \
-    && gem install bundler --version "$BUNDLER_VERSION" --force \
-    && rm -r /usr/src/ruby
+    && gem install bundler --version "$BUNDLER_VERSION" --force
 
 # Install Node.js
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs
-
-# Install app dependencies
-COPY package.json ./
-RUN npm install
-
-# Install bundler-multilock plugin
-RUN bundle plugin install bundler-multilock
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -54,8 +31,10 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install any needed packages specified in Gemfile
+# Install any needed packages specified in Gemfile and package.json
+RUN bundle plugin install bundler-multilock
 RUN bundle install
+RUN npm install
 
 # Make port 80 available to the world outside this container
 EXPOSE 80
