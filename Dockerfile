@@ -7,7 +7,8 @@ RUN apt-get install -y nodejs
 WORKDIR /app
 
 COPY Gemfile Gemfile.lock ./
-RUN bundle plugin install bundler-multilock
+RUN gem install bundler:2.4.22
+RUN bundle _2.4.22_ plugin install bundler-multilock
 RUN bundle install
 RUN npm install
 
