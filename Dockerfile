@@ -1,91 +1,67 @@
-# GENERATED FILE, DO NOT MODIFY!
-# To update this file please edit the relevant template and run the generation
-# task `build/dockerfile_writer.rb --env development --compose-file docker-compose.yml,docker-compose.override.yml --in build/Dockerfile.template --out Dockerfile`
+# Use Heroku's official Ruby buildpack image as a parent image
+FROM heroku/heroku:18-build
 
-ARG RUBY=3.1
+# Set environment variables
+ENV LANG C.UTF-8
+ENV RUBY_MAJOR 2.7
+ENV RUBY_VERSION 2.7.4
+ENV RUBY_DOWNLOAD_SHA256 3043099089608859fc8cce7f9fdccaa1f53a462457e3838ec3b25a7d609fbc5b
+ENV RUBYGEMS_VERSION 3.2.22
+ENV BUNDLER_VERSION 2.2.22
 
-FROM instructure/ruby-passenger:$RUBY
-LABEL maintainer="Instructure"
+# Install Ruby
+RUN set -ex \
+    && buildDeps=' \
+        bison \
+        dpkg-dev \
+        libgdbm-dev \
+        ruby \
+    ' \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends $buildDeps \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fSL -o ruby.tar.gz "https://cache.ruby-lang.org/pub/ruby/$RUBY_MAJOR/ruby-$RUBY_VERSION.tar.gz" \
+    && echo "$RUBY_DOWNLOAD_SHA256 ruby.tar.gz" | sha256sum -c - \
+    && mkdir -p /usr/src/ruby \
+    && tar -xzf ruby.tar.gz -C /usr/src/ruby --strip-components=1 \
+    && rm ruby.tar.gz \
+    && cd /usr/src/ruby \
+    && { echo '#define ENABLE_PATH_CHECK 0'; echo; cat file.c; } > file.c.new && mv file.c.new file.c \
+    && autoconf \
+    && gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
+    && ./configure --build="$gnuArch" --disable-install-doc --enable-shared \
+    && make -j "$(nproc)" \
+    && make install \
+    && apt-get purge -y --auto-remove $buildDeps \
+    && gem update --system "$RUBYGEMS_VERSION" \
+    && gem install bundler --version "$BUNDLER_VERSION" --force \
+    && rm -r /usr/src/ruby
 
-ARG RUBY
-ARG POSTGRES_CLIENT=14
-ENV APP_HOME /usr/src/app/
-ENV RAILS_ENV development
-ENV NGINX_MAX_UPLOAD_SIZE 10g
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US.UTF-8
-ENV LC_CTYPE en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
-ARG CANVAS_RAILS=7.0
-ENV CANVAS_RAILS=${CANVAS_RAILS}
+# Install Node.js
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get install -y nodejs
 
-ENV NODE_MAJOR 18
-ENV YARN_VERSION 1.19.1-1
-ENV GEM_HOME /home/docker/.gem/$RUBY
-ENV PATH ${APP_HOME}bin:$GEM_HOME/bin:$PATH
-ENV BUNDLE_APP_CONFIG /home/docker/.bundle
+# Install app dependencies
+COPY package.json ./
+RUN npm install
 
-WORKDIR $APP_HOME
+# Install bundler-multilock plugin
+RUN bundle plugin install bundler-multilock
 
-USER root
+# Set the working directory in the container to /app
+WORKDIR /app
 
-ARG USER_ID
-# This step allows docker to write files to a host-mounted volume with the correct user permissions.
-# Without it, some linux distributions are unable to write at all to the host mounted volume.
-RUN if [ -n "$USER_ID" ]; then usermod -u "${USER_ID}" docker \
-        && chown --from=9999 docker /usr/src/nginx /usr/src/app -R; fi
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-RUN mkdir -p /etc/apt/keyrings \
-  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
-  && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-  && echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
-  && printf 'path-exclude /usr/share/doc/*\npath-exclude /usr/share/man/*' > /etc/dpkg/dpkg.cfg.d/01_nodoc \
-  && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-  && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-  && add-apt-repository ppa:git-core/ppa -ny \
-  && apt-get update -qq \
-  && apt-get install -qqy --no-install-recommends \
-       nodejs \
-       yarn="$YARN_VERSION" \
-       libxmlsec1-dev \
-       python3-lxml \
-       python-is-python3 \
-       libicu-dev \
-       libidn11-dev \
-       parallel \
-       postgresql-client-$POSTGRES_CLIENT \
-       unzip \
-       pbzip2 \
-       fontforge \
-       git \
-       build-essential \
-  && rm -rf /var/lib/apt/lists/* \
-  && mkdir -p /home/docker/.gem/ruby/$RUBY_MAJOR.0
+# Install any needed packages specified in Gemfile
+RUN bundle install
 
-RUN gem install bundler --no-document -v 2.5.9 \
-  && find $GEM_HOME ! -user docker | xargs chown docker:docker
-RUN npm install -g npm@9.8.1 && npm cache clean --force
+# Make port 80 available to the world outside this container
+EXPOSE 80
 
-USER docker
+# Define environment variable
+ENV NAME World
 
-RUN set -eux; \
-  mkdir -p \
-    .yardoc \
-    app/stylesheets/brandable_css_brands \
-    app/views/info \
-    config/locales/generated \
-    log \
-    node_modules \
-    packages/js-utils/es \
-    packages/js-utils/lib \
-    packages/js-utils/node_modules \
-    pacts \
-    public/dist \
-    public/doc/api \
-    public/javascripts/translations \
-    reports \
-    tmp \
-    /home/docker/.bundle/ \
-    /home/docker/.cache/yarn \
-    /home/docker/.gem/
+# Run app.rb when the container launches
+CMD ["ruby", "app.rb"]
