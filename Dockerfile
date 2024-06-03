@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY Gemfile Gemfile.lock ./
 RUN gem install bundler:2.5.10
-RUN bundle plugin install bundler-multilock
+RUN bundle _2.5.10_ plugin install bundler-multilock
 RUN bundle install
 RUN npm install
 
