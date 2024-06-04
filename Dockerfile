@@ -17,9 +17,8 @@ RUN npx yarn@1.19.1 install -y
 COPY . .
 
 # Make port 80 available to the world outside this container
-EXPOSE 80
+# Expose port 3000 to the outside world
+EXPOSE 3000
 
-RUN mkdir ./hello/ && echo 'Hello, World!' >> ./hello/index.html
-
-# Run app.rb when the container launches
-CMD ["ruby app.rb"]
+# The command to run the application when the Docker container starts
+CMD ["rails", "server", "-b", "0.0.0.0"]
