@@ -4,15 +4,9 @@ FROM ruby:3.1.6
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
-WORKDIR /app
-
-COPY Gemfile Gemfile.lock ./
 RUN gem install bundler:2.5.10
-RUN mkdir -p vendor/gems
-RUN bundle plugin install bundler-multilock
-RUN npm install
-
-COPY . .
+RUN bundle install
+RUN npx yarn install -y
 
 # Make port 80 available to the world outside this container
 EXPOSE 80
