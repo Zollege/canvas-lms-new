@@ -3,7 +3,7 @@ FROM ruby:3.1.6
 WORKDIR /usr/src/app
 
 # Install Node.js
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
 COPY Gemfile Gemfile.lock package.json yarn.lock ./
