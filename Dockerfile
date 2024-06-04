@@ -7,7 +7,7 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
 COPY Gemfile Gemfile.lock package.json yarn.lock ./
-COPY vendors ./vendors
+COPY vendor ./vendor
 
 RUN gem install bundler:2.5.10
 RUN bundle install
