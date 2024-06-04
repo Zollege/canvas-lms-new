@@ -22,4 +22,4 @@ EXPOSE 80
 RUN mkdir ./hello/ && echo 'Hello, World!' >> ./hello/index.html
 
 # Run app.rb when the container launches
-CMD ["ruby"]
+CMD ["ruby app.rb"]
