@@ -2,9 +2,7 @@ FROM ruby:3.1.6
 
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get update -qq && apt-get install -y \
-  nodejs \
-  npm \
-  zlib1g-dev libxml2-dev \
+  nodejs zlib1g-dev libxml2-dev \
   libsqlite3-dev postgresql libpq-dev \
   libxmlsec1-dev libyaml-dev libidn11-dev curl make g++ && \
   npm install -g yarn@1.19.1
