@@ -4,20 +4,9 @@ RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get update -qq && apt-get install -y \
   nodejs \
   npm \
-  postgresql-client \
-  libpq-dev \
-  curl \
-  gnupg2 \
-  build-essential \
-  libxml2-dev \
-  libxslt1-dev \
-  libcurl4-openssl-dev \
-  software-properties-common \
-  imagemagick \
-  libxmlsec1-dev \
-  libidn11-dev \
-  python \
-  python2.7 && \
+  zlib1g-dev libxml2-dev \
+  libsqlite3-dev postgresql libpq-dev \
+  libxmlsec1-dev libyaml-dev libidn11-dev curl make g++ && \
   npm install -g yarn@1.19.1
 
 # Set working directory
