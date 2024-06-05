@@ -23,8 +23,8 @@ development:
 production:
   adapter: postgresql
   encoding: utf8
-  database: canvas_production
-  host: localhost
-  username: canvas
-  password: your_password
+  database: <%= ENV['DATABASE_NAME'] %>
+  host: <%= ENV['DATABASE_HOST'] %>
+  username: <%= ENV['DATABASE_USER'] %>
+  password: <%= ENV['DATABASE_PASSWORD'] %>
   timeout: 5000
