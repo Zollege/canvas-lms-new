@@ -15,6 +15,8 @@ ENV RAILS_ENV=production
 
 COPY Gemfile Gemfile.lock package.json yarn.lock ./
 COPY vendor ./vendor
+COPY config ./config
+COPY packages ./packages
 
 RUN gem install bundler:2.5.10
 RUN bundle install
