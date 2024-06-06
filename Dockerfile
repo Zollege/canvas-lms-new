@@ -13,21 +13,26 @@ WORKDIR /var/canvas
 # Set environment variables
 ENV RAILS_ENV=production
 
-COPY Gemfile Gemfile.lock package.json yarn.lock ./
-COPY vendor ./vendor
-COPY config ./config
-COPY packages ./packages
-COPY script ./script
-COPY bin ./bin
+# COPY Gemfile Gemfile.lock package.json yarn.lock Rakefile ./
+# COPY vendor ./vendor
+# COPY config ./config
+# COPY packages ./packages
+# COPY script ./script
+# COPY bin ./bin
+# COPY lib ./lib
+
+COPY . /var/canvas
+RUN rm -rf .git
 
 RUN gem install bundler:2.5.10
 RUN bundle install
 RUN yarn install
-RUN bundle exec rake canvas:compile_assets
 
-# Copy the application code
-COPY . /var/canvas
-RUN rm -rf .git
+# # Copy the application code
+# COPY . /var/canvas
+# RUN rm -rf .git
+
+RUN bundle exec rake canvas:compile_assets
 
 # Copy configuration files
 RUN cp config/dynamic_settings.yml.example config/dynamic_settings.yml && \
