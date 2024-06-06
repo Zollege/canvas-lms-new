@@ -17,6 +17,8 @@ COPY Gemfile Gemfile.lock package.json yarn.lock ./
 COPY vendor ./vendor
 COPY config ./config
 COPY packages ./packages
+COPY script ./script
+COPY bin ./bin
 
 RUN gem install bundler:2.5.10
 RUN bundle install
