@@ -1,7 +1,5 @@
 FROM ruby:3.1.6
 
-RUN rm -r .git
-
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get update -qq && apt-get install -y \
   nodejs zlib1g-dev libxml2-dev \
@@ -25,6 +23,7 @@ RUN bundle exec rake canvas:compile_assets
 
 # Copy the application code
 COPY . /var/canvas
+RUN rm -rf .git
 
 # Copy configuration files
 RUN cp config/dynamic_settings.yml.example config/dynamic_settings.yml && \
