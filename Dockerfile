@@ -12,16 +12,19 @@ RUN apt-get update -qq && apt-get install -y \
 # Set working directory
 WORKDIR /var/canvas
 
-# Copy the application code
-COPY . /var/canvas
-
 # Set environment variables
 ENV RAILS_ENV=production
+
+COPY Gemfile Gemfile.lock package.json yarn.lock ./
+COPY vendor ./vendor
 
 RUN gem install bundler:2.5.10
 RUN bundle install
 RUN yarn install
 RUN bundle exec rake canvas:compile_assets
+
+# Copy the application code
+COPY . /var/canvas
 
 # Copy configuration files
 RUN cp config/dynamic_settings.yml.example config/dynamic_settings.yml && \
