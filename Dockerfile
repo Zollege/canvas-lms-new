@@ -1,5 +1,7 @@
 FROM ruby:3.1.6
 
+RUN rm -r .git
+
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get update -qq && apt-get install -y \
   nodejs zlib1g-dev libxml2-dev \
@@ -15,10 +17,6 @@ COPY . /var/canvas
 
 # Set environment variables
 ENV RAILS_ENV=production
-
-COPY Gemfile Gemfile.lock package.json yarn.lock ./
-COPY vendor ./vendor
-COPY config ./config
 
 RUN gem install bundler:2.5.10
 RUN bundle install
